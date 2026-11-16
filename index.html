@@ -72,8 +72,6 @@ section{padding:96px 0}
 .ticket .dot{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none}
 .t1{bottom:-22px;inset-inline-end:-10px;animation:float 6s ease-in-out infinite}
 .t1 .dot{background:#e8f3e4;color:var(--green-2)}
-.t2{top:26px;inset-inline-start:-26px;animation:float 6s ease-in-out -3s infinite}
-.t2 .dot{background:#fbecec;color:var(--red)}
 @keyframes float{50%{transform:translateY(-10px)}}
 .strip{margin-top:90px;border-top:1px solid rgba(255,255,255,.12);display:grid;grid-template-columns:repeat(4,1fr)}
 .strip div{padding:26px 10px;display:flex;align-items:center;gap:12px;font-family:var(--head);font-weight:600;font-size:15px;color:rgba(255,255,255,.9)}
@@ -82,7 +80,7 @@ section{padding:96px 0}
 @media(max-width:900px){
   .hero{padding-top:118px}
   .hero-grid{grid-template-columns:1fr;gap:56px}
-  .t2{inset-inline-start:-6px}.t1{inset-inline-end:-4px}
+.t1{inset-inline-end:-4px}
   .strip{grid-template-columns:1fr 1fr}
   .strip div:nth-child(3){border-inline-start:0;padding-inline-start:10px}
   .strip div:nth-child(n+3){border-top:1px solid rgba(255,255,255,.12)}
@@ -275,7 +273,6 @@ footer a:hover{color:#fff}
       </div>
       <div class="hero-photo reveal">
         <div class="frame"><img src="img/work-2.jpg" alt="حاويات قوة السارية الحمراء" fetchpriority="high"></div>
-        <div class="ticket t2"><span class="dot"><i data-lucide="recycle" class="icon"></i></span><div><b>تبديل حاوية</b>نشيل المليانة ونحط فاضية</div></div>
         <div class="ticket t1"><span class="dot"><i data-lucide="check-check" class="icon"></i></span><div><b>حاوية ٥٦٢ وصلت</b>عند الموقع وجاهزة للاستخدام</div></div>
       </div>
     </div>
