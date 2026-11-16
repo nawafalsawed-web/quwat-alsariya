@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحة الحاويات</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#24420e">
+<link rel="icon" href="img/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{
+  --green:#24420e;--green-2:#335c1f;--gold:#b07f09;--gold-2:#d9a521;--red:#c4262e;--amber:#e08a00;
+  --bg:#f3efe5;--panel:#fffdf8;--ink:#1b1f17;--muted:#667060;--line:#e4dccb;
+  --head:"Alexandria",system-ui,sans-serif;--body:"IBM Plex Sans Arabic",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:var(--body);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.6;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+.icon{width:18px;height:18px;stroke-width:2;flex:none}
+h1,h2,h3,b.h{font-family:var(--head)}
+
+.bar{background:var(--green);color:#fff;display:flex;align-items:center;gap:16px;padding:10px 18px;flex:none}
+.bar img{height:38px}
+.bar h1{font-size:17px;font-weight:700}
+.demo{font-size:12px;background:rgba(217,165,33,.2);color:var(--gold-2);padding:3px 10px;border-radius:999px;font-family:var(--head);font-weight:600}
+.tabs{display:flex;gap:4px;margin-inline-start:auto;background:rgba(255,255,255,.08);padding:4px;border-radius:12px}
+.tabs button{background:none;border:0;color:rgba(255,255,255,.75);padding:8px 14px;border-radius:9px;display:flex;gap:7px;align-items:center;font-family:var(--head);font-weight:600;font-size:14px;position:relative}
+.tabs button.on{background:#fff;color:var(--green)}
+.tabs .cnt{background:var(--red);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 5px}
+.bar .reset{background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.8);border-radius:10px;padding:7px 10px;display:flex;gap:6px;align-items:center;font-size:13px}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:14px 18px 0;flex:none}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s}
+.kpi:hover,.kpi.on{border-color:var(--green-2)}
+.kpi .ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center}
+.kpi b{font-family:var(--head);font-size:24px;font-weight:800;display:block;line-height:1.1}
+.kpi span{color:var(--muted);font-size:13px}
+.k-all .ic{background:#ece6d6;color:var(--ink)}.k-out .ic{background:#e6f1e2;color:var(--green-2)}.k-late .ic{background:#fbe5e6;color:var(--red)}.k-yard .ic{background:#f6ecd2;color:var(--gold)}
+.k-late b{color:var(--red)}
+
+.view{flex:1;min-height:0;display:none;padding:14px 18px 18px;gap:14px}
+.view.on{display:flex}
+.side{width:380px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.search{padding:12px;border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+.search input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;font:inherit;background:#fff}
+.search input:focus{outline:0;border-color:var(--green-2)}
+.list{overflow:auto;flex:1}
+.item{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid #efe9db;cursor:pointer;transition:background .15s;width:100%;text-align:inherit;background:none;border-inline:0;border-top:0}
+.item:hover,.item.sel{background:#f6f2e6}
+.num{font-family:var(--head);font-weight:800;font-size:15px;width:52px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;background:var(--green-2);flex:none}
+.num.late{background:var(--red)}.num.soon{background:var(--amber)}.num.yard{background:#b9b19c}
+.item .t{flex:1;min-width:0}
+.item .t b{font-family:var(--head);font-weight:600;font-size:14.5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .t span{color:var(--muted);font-size:13px}
+.pill{font-size:12px;font-family:var(--head);font-weight:600;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.late{background:#fbe5e6;color:var(--red)}.pill.soon{background:#fdf0d9;color:#a86400}.pill.ok{background:#e6f1e2;color:var(--green-2)}.pill.yard{background:#efeadf;color:var(--muted)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.mapbox{flex:1;border-radius:18px;overflow:hidden;border:1px solid var(--line);position:relative;min-height:300px}
+#map{position:absolute;inset:0}
+.mk{font-family:var(--head);font-weight:800;font-size:12px;color:#fff;background:var(--green-2);border:2px solid #fff;border-radius:8px;padding:2px 6px;box-shadow:0 3px 8px rgba(0,0,0,.3);white-space:nowrap;transform:translate(-50%,-50%);display:inline-block}
+.mk.late{background:var(--red);animation:pulse 1.6s infinite}.mk.soon{background:var(--amber)}
+.mk.yardmk{background:var(--gold);font-size:13px;padding:5px 10px}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(196,38,46,.25)}}
+.legend{position:absolute;bottom:12px;inset-inline-start:12px;z-index:500;background:rgba(255,253,248,.95);border-radius:12px;padding:8px 12px;display:flex;gap:14px;font-size:12.5px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-inline-end:5px;vertical-align:middle}
+.pickhint{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:600;background:var(--ink);color:#fff;padding:9px 16px;border-radius:999px;font-family:var(--head);font-size:13.5px;display:none}
+.pickhint.on{display:block}
+
+/* drawer */
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(420px,100%);background:var(--panel);z-index:1000;box-shadow:20px 0 60px rgba(0,0,0,.18);transform:translateX(-105%);transition:transform .3s;display:flex;flex-direction:column}
+.drawer.open{transform:none}
+.dh{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px}
+.dh .num{width:64px;height:52px;font-size:20px;border-radius:14px}
+.dh h2{font-size:18px}
+.x{margin-inline-start:auto;background:#efe9db;border:0;width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.db{padding:18px 20px;overflow:auto;flex:1}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:14.5px;margin-bottom:18px}
+.kv dt{color:var(--muted)}.kv dd{font-weight:600;margin:0}
+.meter{height:8px;background:#efe9db;border-radius:8px;overflow:hidden;margin:4px 0 18px}
+.meter i{display:block;height:100%;background:var(--green-2);border-radius:8px}
+.meter.late i{background:var(--red)}.meter.soon i{background:var(--amber)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+.b{border:0;border-radius:12px;padding:11px 12px;font-family:var(--head);font-weight:600;font-size:14px;display:flex;gap:7px;align-items:center;justify-content:center;text-decoration:none}
+.b-green{background:var(--green);color:#fff}.b-red{background:var(--red);color:#fff}.b-soft{background:#efe9db;color:var(--ink)}.b-wa{background:#1fa855;color:#fff}.b-gold{background:var(--gold);color:#fff}
+.b:disabled{opacity:.5;cursor:not-allowed}
+.log h3{font-size:14px;margin-bottom:10px;color:var(--muted)}
+.log li{list-style:none;padding-block-end:14px;padding-inline-start:18px;border-inline-start:2px solid var(--line);position:relative;font-size:14px}
+.log li::before{content:"";position:absolute;inset-inline-start:-6px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--gold)}
+.log li span{color:var(--muted);font-size:12.5px;display:block}
+.log ul{padding:0}
+.log img{width:120px;border-radius:8px;margin-top:6px}
+.scrim{position:fixed;inset:0;background:rgba(10,18,8,.35);z-index:900;display:none}
+.scrim.on{display:block}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:1100;display:none;place-items:center;padding:16px;background:rgba(10,18,8,.5)}
+.modal.on{display:grid}
+.card{background:var(--panel);border-radius:20px;width:min(460px,100%);max-height:92vh;overflow:auto;padding:22px}
+.card h2{font-size:18px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.fld{margin-bottom:12px}
+.fld label{display:block;font-family:var(--head);font-weight:600;font-size:13.5px;margin-bottom:5px}
+.fld input,.fld select{width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit;background:#fff}
+.fld input:focus,.fld select:focus{outline:0;border-color:var(--green-2)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.locline{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted);margin-bottom:14px;flex-wrap:wrap}
+.foot{display:flex;gap:8px;margin-top:8px}
+.foot .b{flex:1}
+
+/* requests */
+.reqs{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-content:start}
+.req{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.req .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.req .hd b{font-family:var(--head);font-size:15.5px}
+.req .meta{color:var(--muted);font-size:13.5px;display:grid;gap:3px}
+.req .meta div{display:flex;gap:6px;align-items:center}
+.req .meta .icon{width:15px;height:15px}
+.req .acts{margin:0}
+.req.done{opacity:.55}
+.t-new{background:#e6f1e2;color:var(--green-2)}.t-swap{background:#f6ecd2;color:#8a6400}.t-up{background:#e7ecf5;color:#2d4f8a}
+
+/* driver */
+.driver{flex:1;display:flex;justify-content:center;overflow:auto}
+.dcard{width:min(480px,100%);display:flex;flex-direction:column;gap:14px}
+.dcard .big{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:22px}
+.dcard label{font-family:var(--head);font-weight:700;font-size:15px;display:block;margin-bottom:8px}
+.dnum{width:100%;font-family:var(--head);font-weight:900;font-size:44px;text-align:center;border:2px solid var(--line);border-radius:16px;padding:12px;letter-spacing:.06em;background:#fff}
+.dnum:focus{outline:0;border-color:var(--green-2)}
+.dinfo{margin-top:10px;font-size:14px;color:var(--muted);min-height:22px;text-align:center}
+.dbtns{display:grid;gap:10px}
+.dbtns .b{padding:20px;font-size:18px;border-radius:18px}
+.dbtns .icon{width:24px;height:24px}
+.gps{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)}
+.gps.ok{color:var(--green-2)}
+.photo{display:flex;align-items:center;gap:10px;border:1.5px dashed var(--line);border-radius:14px;padding:12px;cursor:pointer;color:var(--muted);font-size:14px}
+.photo img{width:56px;height:56px;object-fit:cover;border-radius:10px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translate(-50%,120px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:14px;z-index:1200;font-family:var(--head);font-size:14.5px;transition:transform .3s;display:flex;gap:8px;align-items:center}
+.toast.on{transform:translate(-50%,0)}
+
+/* qr */
+.sticker{border:3px solid var(--green);border-radius:18px;padding:18px;text-align:center;background:#fff}
+.sticker .no{font-family:var(--head);font-weight:900;font-size:40px;color:var(--red);line-height:1.1}
+.sticker .qr{display:grid;place-items:center;margin:12px 0}
+.sticker p{font-family:var(--head);font-weight:700;font-size:15px;color:var(--green)}
+.sticker small{color:var(--muted)}
+@media print{body>*:not(#qrModal){display:none!important}#qrModal{position:static;background:none;display:block!important}#qrModal .foot,#qrModal h2{display:none}#qrModal .card{box-shadow:none;max-height:none}}
+
+@media(max-width:860px){
+  .bar{flex-wrap:wrap;padding:10px 12px}
+  .bar h1{font-size:15px}
+  .bar .reset span{display:none}
+  .tabs{order:3;width:100%;margin:0}
+  .tabs button{flex:1;justify-content:center;padding:9px 6px;font-size:13px}
+  .kpis{grid-template-columns:1fr 1fr;padding:10px 12px 0;gap:8px}
+  .kpi{padding:10px 12px}.kpi b{font-size:20px}.kpi .ic{width:34px;height:34px}
+  html,body{height:auto}
+  .view{padding:10px 12px 90px;flex-direction:column;flex:none}
+  .mapbox{order:-1;flex:none;height:44vh}
+  .side{width:auto;height:60vh;flex:none}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <img src="img/logo-dark.png" alt="قوة السارية">
+  <h1>لوحة الحاويات</h1>
+  <span class="demo">نموذج تجريبي</span>
+  <nav class="tabs" role="tablist">
+    <button class="on" data-v="map"><i data-lucide="map" class="icon"></i>الخريطة</button>
+    <button data-v="req"><i data-lucide="inbox" class="icon"></i>الطلبات<span class="cnt" id="reqCnt" hidden></span></button>
+    <button data-v="drv"><i data-lucide="truck" class="icon"></i>السائق</button>
+  </nav>
+  <button class="reset" id="resetBtn" title="ترجيع البيانات التجريبية"><i data-lucide="rotate-ccw" class="icon"></i><span>بيانات تجريبية</span></button>
+</header>
+
+<div class="kpis" id="kpis">
+  <div class="kpi k-all on" data-f="all"><span class="ic"><i data-lucide="boxes" class="icon"></i></span><div><b id="kAll">0</b><span>كل الحاويات</span></div></div>
+  <div class="kpi k-out" data-f="out"><span class="ic"><i data-lucide="map-pin" class="icon"></i></span><div><b id="kOut">0</b><span>عند العملاء</span></div></div>
+  <div class="kpi k-late" data-f="late"><span class="ic"><i data-lucide="alarm-clock" class="icon"></i></span><div><b id="kLate">0</b><span>متأخرة الرفع</span></div></div>
+  <div class="kpi k-yard" data-f="yard"><span class="ic"><i data-lucide="warehouse" class="icon"></i></span><div><b id="kYard">0</b><span>جاهزة بالحوش</span></div></div>
+</div>
+
+<main class="view on" id="v-map">
+  <aside class="side">
+    <div class="search"><i data-lucide="search" class="icon" style="color:var(--muted)"></i><input id="q" placeholder="رقم حاوية، عميل، حي…"></div>
+    <div class="list" id="list"></div>
+  </aside>
+  <div class="mapbox">
+    <div id="map"></div>
+    <div class="pickhint" id="pickHint">اضغط على الخريطة لتحديد موقع الحاوية</div>
+    <div class="legend"><span><i style="background:var(--green-2)"></i>ضمن المدة</span><span><i style="background:var(--amber)"></i>آخر يوم</span><span><i style="background:var(--red)"></i>متأخرة</span></div>
+  </div>
+</main>
+
+<main class="view" id="v-req"><div class="reqs" id="reqs"></div></main>
+
+<main class="view" id="v-drv">
+  <div class="driver"><div class="dcard">
+    <div class="big">
+      <label for="dNum">رقم الحاوية</label>
+      <input class="dnum" id="dNum" inputmode="numeric" placeholder="٥٤٨" autocomplete="off">
+      <div class="dinfo" id="dInfo">اكتب الرقم المكتوب على الحاوية</div>
+    </div>
+    <div class="big">
+      <div class="gps" id="gps"><i data-lucide="locate" class="icon"></i>يتم تسجيل موقعك تلقائياً مع كل عملية</div>
+      <label class="photo" style="margin-top:12px"><input type="file" accept="image/*" capture="environment" id="dPhoto" hidden><i data-lucide="camera" class="icon"></i><span id="dPhotoTxt">صوّر الحاوية (اختياري)</span></label>
+    </div>
+    <div class="dbtns">
+      <button class="b b-green" data-act="drop"><i data-lucide="arrow-down-to-line" class="icon"></i>نزّلتها عند العميل</button>
+      <button class="b b-gold" data-act="swap"><i data-lucide="repeat" class="icon"></i>بدّلتها</button>
+      <button class="b b-red" data-act="pick"><i data-lucide="arrow-up-from-line" class="icon"></i>رفعتها ورجعت الحوش</button>
+    </div>
+  </div></div>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+<div class="modal" id="dropModal"><form class="card" id="dropForm">
+  <h2><i data-lucide="arrow-down-to-line" class="icon"></i>تنزيل حاوية <span id="dmNum"></span></h2>
+  <div class="fld"><label>الحاوية</label><select id="dmSel" required></select></div>
+  <div class="row">
+    <div class="fld"><label>العميل</label><input id="dmName" required></div>
+    <div class="fld"><label>الجوال</label><input id="dmPhone" inputmode="tel" dir="ltr" placeholder="05xxxxxxxx"></div>
+  </div>
+  <div class="row">
+    <div class="fld"><label>الحي</label><input id="dmHood"></div>
+    <div class="fld"><label>مدة الإيجار (يوم)</label><input id="dmDays" type="number" min="1" value="7"></div>
+  </div>
+  <div class="locline"><i data-lucide="map-pin" class="icon"></i><span id="dmLoc">ما تحدد الموقع</span><button type="button" class="b b-soft" id="dmPick" style="padding:6px 10px">حدد على الخريطة</button><button type="button" class="b b-soft" id="dmGps" style="padding:6px 10px">موقعي</button></div>
+  <div class="foot"><button type="button" class="b b-soft" data-close>إلغاء</button><button class="b b-green">تأكيد التنزيل</button></div>
+</form></div>
+
+<div class="modal" id="qrModal"><div class="card">
+  <h2><i data-lucide="qr-code" class="icon"></i>ملصق الحاوية</h2>
+  <div class="sticker"><div class="no" id="qrNo"></div><div class="qr" id="qrBox"></div><p>امسح الكود لطلب تبديل أو رفع</p><small id="qrTel"></small></div>
+  <div class="foot"><button class="b b-soft" data-close>إغلاق</button><button class="b b-green" onclick="print()"><i data-lucide="printer" class="icon"></i>طباعة</button></div>
+</div></div>
+
+<div class="toast" id="toast"><i data-lucide="check-circle-2" class="icon"></i><span></span></div>
+
+<script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+const PHONE='0501023023';
+const YARD={lat:24.565,lng:46.79,name:'الحوش'};
+const KEY='sariya_fleet_v1', RKEY='sariya_requests', DAY=864e5;
+const $=s=>document.querySelector(s);
+const ar=n=>String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch(_){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(_){toast('التخزين ممتلي، احذف بعض الصور')}}};
+
+// ---------- بيانات تجريبية ----------
+const HOODS=[['النرجس',24.862,46.662],['الملقا',24.808,46.612],['الياسمين',24.823,46.642],['العارض',24.889,46.618],['القيروان',24.851,46.583],['حطين',24.768,46.603],['الرمال',24.879,46.818],['المونسية',24.838,46.772],['النسيم',24.732,46.823],['طويق',24.583,46.552],['ظهرة لبن',24.632,46.561],['عرقة',24.693,46.583],['الصحافة',24.801,46.639],['الندى',24.818,46.683],['اليرموك',24.812,46.772],['قرطبة',24.822,46.733],['الحزم',24.572,46.652],['العقيق',24.771,46.629],['الربيع',24.792,46.661],['الشفا',24.561,46.712],['بدر',24.532,46.733],['النخيل',24.741,46.632]];
+const NAMES=['أبو خالد','أبو فهد','أبو سعد','م. فيصل','أبو عبدالله','أبو ناصر','مقاول الموقع','أبو تركي','أبو محمد','أبو سلطان','أبو عمر','أبو راكان'];
+function seed(){
+  let r=7;const rnd=()=>(r=(r*9301+49297)%233280)/233280;
+  const now=Date.now(),fleet=[];
+  for(let n=531;n<=565;n++){
+    const c={n,status:'yard',swaps:0,log:[]};
+    if(rnd()<.68){
+      const h=HOODS[Math.floor(rnd()*HOODS.length)],days=[3,5,7,7,10,14][Math.floor(rnd()*6)];
+      const age=Math.floor(rnd()*(days+3));
+      Object.assign(c,{status:'out',cust:NAMES[Math.floor(rnd()*NAMES.length)],phone:'05'+String(Math.floor(rnd()*1e8)).padStart(8,'0'),hood:h[0],lat:h[1]+(rnd()-.5)*.02,lng:h[2]+(rnd()-.5)*.02,since:now-age*DAY-rnd()*DAY*.5,days});
+      c.log.push({t:'تنزيل عند '+c.cust+' · '+c.hood,at:c.since});
+    }
+    fleet.push(c);
+  }
+  store.set(KEY,fleet);
+  store.set(RKEY,[
+    {id:1,type:'حاوية جديدة',size:'كبيرة',name:'أبو بندر',phone:'0551234567',hood:'العارض، أرض عظم',lat:24.893,lng:46.611,date:new Date().toISOString().slice(0,10),slot:'الصباح',at:new Date(now-40*60e3).toISOString()},
+    {id:2,type:'تبديل حاوية',cnum:String(fleet.find(c=>c.status==='out').n),name:'أبو خالد',phone:'0509876543',hood:'',date:new Date().toISOString().slice(0,10),slot:'العصر',at:new Date(now-2*3600e3).toISOString()}
+  ]);
+  return fleet;
+}
+let fleet=store.get(KEY,null)||seed();
+const save=()=>{store.set(KEY,fleet);render()};
+const find=n=>fleet.find(c=>c.n==n);
+const daysOut=c=>Math.floor((Date.now()-c.since)/DAY);
+const state=c=>c.status==='yard'?'yard':daysOut(c)>c.days?'late':daysOut(c)>=c.days-1?'soon':'ok';
+const label={yard:'في الحوش',late:'متأخرة',soon:'آخر يوم',ok:'ضمن المدة'};
+const when=t=>{const m=Math.round((Date.now()-t)/6e4);return m<60?`قبل ${ar(m)} دقيقة`:m<1440?`قبل ${ar(Math.round(m/60))} ساعة`:`قبل ${ar(Math.floor(m/1440))} يوم`};
+
+// ---------- الخريطة ----------
+const map=L.map('map',{zoomControl:false}).setView([24.74,46.68],11);
+L.control.zoom({position:'topleft'}).addTo(map);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+const layer=L.layerGroup().addTo(map);
+let filter='all',sel=null,picking=null;
+
+function render(){
+  const out=fleet.filter(c=>c.status==='out'),late=out.filter(c=>state(c)==='late');
+  $('#kAll').textContent=ar(fleet.length);$('#kOut').textContent=ar(out.length);$('#kLate').textContent=ar(late.length);$('#kYard').textContent=ar(fleet.length-out.length);
+  const q=$('#q').value.trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  const order={late:0,soon:1,ok:2,yard:3};
+  const rows=fleet.filter(c=>filter==='all'||(filter==='out'?c.status==='out':filter==='yard'?c.status==='yard':state(c)==='late'))
+    .filter(c=>!q||String(c.n).includes(q)||(c.cust||'').includes(q)||(c.hood||'').includes(q))
+    .sort((a,b)=>order[state(a)]-order[state(b)]||(state(a)==='yard'?a.n-b.n:daysOut(b)-b.days-(daysOut(a)-a.days)));
+  $('#list').innerHTML=rows.length?rows.map(c=>{const s=state(c);return `<button class="item ${sel==c.n?'sel':''}" data-n="${c.n}"><span class="num ${s}">${ar(c.n)}</span><span class="t"><b>${c.status==='out'?c.cust+' · '+c.hood:'جاهزة للتنزيل'}</b><span>${c.status==='out'?`يوم ${ar(daysOut(c))} من ${ar(c.days)}`:'في الحوش'}</span></span><span class="pill ${s}">${label[s]}</span></button>`}).join(''):'<div class="empty">ما فيه نتائج</div>';
+  layer.clearLayers();
+  out.forEach(c=>{const s=state(c);L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:`<span class="mk ${s}">${ar(c.n)}</span>`,iconSize:[0,0]})}).on('click',()=>openC(c.n)).addTo(layer)});
+  L.marker([YARD.lat,YARD.lng],{icon:L.divIcon({className:'',html:`<span class="mk yardmk">الحوش · ${ar(fleet.length-out.length)}</span>`,iconSize:[0,0]})}).on('click',()=>setFilter('yard')).addTo(layer);
+  const reqs=store.get(RKEY,[]).filter(r=>!r.done);
+  $('#reqCnt').hidden=!reqs.length;$('#reqCnt').textContent=ar(reqs.length);
+  renderReqs();
+}
+function setFilter(f){filter=f;document.querySelectorAll('.kpi').forEach(k=>k.classList.toggle('on',k.dataset.f===f));showView('map');render()}
+document.querySelectorAll('.kpi').forEach(k=>k.onclick=()=>setFilter(k.dataset.f));
+$('#q').oninput=render;
+$('#list').onclick=e=>{const b=e.target.closest('.item');if(b)openC(+b.dataset.n)};
+
+// ---------- تفاصيل الحاوية ----------
+function openC(n){
+  const c=find(n);sel=n;const s=state(c);
+  if(c.status==='out')map.flyTo([c.lat,c.lng],15,{duration:.6});
+  const pct=c.status==='out'?Math.min(100,daysOut(c)/c.days*100):0;
+  $('#drawer').innerHTML=`<div class="dh"><span class="num ${s}">${ar(c.n)}</span><div><h2>حاوية ${ar(c.n)}</h2><span class="pill ${s}">${label[s]}</span></div><button class="x" data-close aria-label="إغلاق"><i data-lucide="x" class="icon"></i></button></div>
+  <div class="db">${c.status==='out'?`
+    <dl class="kv"><dt>العميل</dt><dd>${c.cust}</dd><dt>الجوال</dt><dd dir="ltr" style="text-align:right">${c.phone||'-'}</dd><dt>الحي</dt><dd>${c.hood||'-'}</dd><dt>نزلت</dt><dd>${when(c.since)}</dd><dt>المدة</dt><dd>يوم ${ar(daysOut(c))} من ${ar(c.days)}${s==='late'?` · <span style="color:var(--red)">متأخرة ${ar(daysOut(c)-c.days)} يوم</span>`:''}</dd><dt>التبديلات</dt><dd>${ar(c.swaps)}</dd></dl>
+    <div class="meter ${s}"><i style="width:${pct}%"></i></div>
+    <div class="acts">
+      <button class="b b-red" data-a="pick"><i data-lucide="arrow-up-from-line" class="icon"></i>رفع للحوش</button>
+      <button class="b b-gold" data-a="swap"><i data-lucide="repeat" class="icon"></i>تبديل</button>
+      <button class="b b-soft" data-a="ext"><i data-lucide="calendar-plus" class="icon"></i>تمديد ٣ أيام</button>
+      <a class="b b-wa" target="_blank" rel="noopener" href="https://wa.me/966${(c.phone||'').replace(/^0/,'')}?text=${encodeURIComponent(`السلام عليكم ${c.cust}، معك قوة السارية بخصوص الحاوية رقم ${c.n}`+(s==='late'?'. انتهت مدة الإيجار، تبي نرفعها أو نمدد؟':''))}"><i data-lucide="message-circle" class="icon"></i>راسل العميل</a>
+      <a class="b b-soft" target="_blank" rel="noopener" href="https://maps.google.com/?q=${c.lat},${c.lng}"><i data-lucide="navigation" class="icon"></i>الطريق</a>
+      <button class="b b-soft" data-a="qr"><i data-lucide="qr-code" class="icon"></i>ملصق QR</button>
+    </div>`:`
+    <p style="color:var(--muted);margin-bottom:16px">الحاوية في الحوش وجاهزة للتنزيل.</p>
+    <div class="acts"><button class="b b-green" data-a="drop"><i data-lucide="arrow-down-to-line" class="icon"></i>نزّلها عند عميل</button><button class="b b-soft" data-a="qr"><i data-lucide="qr-code" class="icon"></i>ملصق QR</button></div>`}
+    <div class="log"><h3>السجل</h3><ul>${c.log.slice().reverse().map(l=>`<li>${l.t}<span>${when(l.at)}</span>${l.img?`<img src="${l.img}" alt="">`:''}</li>`).join('')||'<li>ما فيه حركات<span>-</span></li>'}</ul></div>
+  </div>`;
+  $('#drawer').classList.add('open');$('#scrim').classList.add('on');lucide.createIcons();render();
+}
+function closeAll(){$('#drawer').classList.remove('open');$('#scrim').classList.remove('on');document.querySelectorAll('.modal').forEach(m=>m.classList.remove('on'));sel=null;render()}
+$('#scrim').onclick=closeAll;
+document.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeAll()});
+addEventListener('keydown',e=>{if(e.key==='Escape')closeAll()});
+$('#drawer').onclick=e=>{
+  const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;const c=find(sel);
+  if(a==='pick')pick(c);
+  if(a==='swap')swap(c);
+  if(a==='ext'){c.days+=3;c.log.push({t:'تمديد ٣ أيام',at:Date.now()});save();openC(c.n);toast('تم التمديد')}
+  if(a==='drop')openDrop(c.n);
+  if(a==='qr')openQR(c.n);
+};
+function pick(c,extra={}){c.log.push({t:'رفع ورجعت الحوش',at:Date.now(),...extra});Object.assign(c,{status:'yard',cust:null,phone:null,hood:null,lat:null,lng:null,since:null,swaps:0});save();toast(`حاوية ${ar(c.n)} رجعت الحوش`)}
+function swap(c,extra={}){c.swaps++;c.since=Date.now();c.log.push({t:'تبديل بحاوية فاضية',at:Date.now(),...extra});save();toast(`تم تبديل ${ar(c.n)}`)}
+
+// ---------- تنزيل ----------
+let dropLL=null,fromReq=null;
+function openDrop(n,req){
+  fromReq=req||null;dropLL=req&&req.lat?{lat:req.lat,lng:req.lng}:null;
+  const yard=fleet.filter(c=>c.status==='yard');
+  if(!yard.length)return toast('ما فيه حاويات بالحوش');
+  $('#dmSel').innerHTML=yard.map(c=>`<option value="${c.n}" ${c.n==n?'selected':''}>${ar(c.n)}</option>`).join('');
+  $('#dmName').value=req?.name||'';$('#dmPhone').value=req?.phone||'';$('#dmHood').value=req?.hood||'';$('#dmDays').value=7;
+  $('#dmLoc').textContent=dropLL?'الموقع محدد ✓':'ما تحدد الموقع';
+  $('#drawer').classList.remove('open');$('#dropModal').classList.add('on');
+}
+$('#dmPick').onclick=()=>{$('#dropModal').classList.remove('on');$('#scrim').classList.remove('on');showView('map');picking=true;$('#pickHint').classList.add('on')};
+map.on('click',e=>{if(!picking)return;picking=false;dropLL=e.latlng;$('#pickHint').classList.remove('on');$('#dmLoc').textContent='الموقع محدد ✓';$('#dropModal').classList.add('on')});
+$('#dmGps').onclick=()=>gps(p=>{dropLL=p;$('#dmLoc').textContent='موقعك الحالي ✓'});
+$('#dropForm').onsubmit=e=>{
+  e.preventDefault();
+  if(!dropLL)return toast('حدد الموقع أول');
+  const c=find(+$('#dmSel').value);
+  Object.assign(c,{status:'out',cust:$('#dmName').value.trim(),phone:$('#dmPhone').value.trim(),hood:$('#dmHood').value.trim(),lat:dropLL.lat,lng:dropLL.lng,since:Date.now(),days:+$('#dmDays').value||7,swaps:0});
+  c.log.push({t:'تنزيل عند '+c.cust+(c.hood?' · '+c.hood:''),at:Date.now()});
+  if(fromReq)markReq(fromReq.id);
+  closeAll();save();setFilter('all');openC(c.n);toast(`نزلت ${ar(c.n)} عند ${c.cust}`);
+};
+
+// ---------- الطلبات ----------
+function markReq(id){store.set(RKEY,store.get(RKEY,[]).map(r=>r.id===id?{...r,done:true}:r))}
+function renderReqs(){
+  const reqs=store.get(RKEY,[]);
+  $('#reqs').innerHTML=reqs.length?reqs.map(r=>{const t=r.type==='حاوية جديدة'?'t-new':r.type==='تبديل حاوية'?'t-swap':'t-up';
+    return `<div class="req ${r.done?'done':''}"><div class="hd"><b>${r.name}</b><span class="pill ${t}">${r.type}</span></div>
+    <div class="meta">${r.cnum?`<div><i data-lucide="hash" class="icon"></i>حاوية ${ar(r.cnum)}</div>`:''}${r.size?`<div><i data-lucide="ruler" class="icon"></i>المقاس: ${r.size}</div>`:''}<div><i data-lucide="calendar" class="icon"></i>${r.date} · ${r.slot}</div>${r.hood?`<div><i data-lucide="map-pin" class="icon"></i>${r.hood}</div>`:''}<div><i data-lucide="clock" class="icon"></i>وصل ${when(new Date(r.at).getTime())}</div></div>
+    ${r.done?'<span class="pill ok" style="align-self:start">تم</span>':`<div class="acts"><button class="b b-green" data-r="${r.id}">${r.type==='حاوية جديدة'?'عيّن حاوية':r.type==='تبديل حاوية'?'تم التبديل':'تم الرفع'}</button><a class="b b-wa" target="_blank" rel="noopener" href="https://wa.me/966${r.phone.replace(/^0/,'')}"><i data-lucide="message-circle" class="icon"></i>راسله</a></div>`}</div>`}).join(''):'<div class="empty">ما فيه طلبات. الطلبات اللي تجي من الموقع تطلع هنا.</div>';
+  lucide.createIcons();
+}
+$('#reqs').onclick=e=>{
+  const id=+e.target.closest('[data-r]')?.dataset.r;if(!id)return;
+  const r=store.get(RKEY,[]).find(x=>x.id===id);
+  if(r.type==='حاوية جديدة')return openDrop(null,r);
+  const c=find(r.cnum);
+  if(!c||c.status!=='out')return toast('الحاوية مو عند عميل');
+  r.type==='تبديل حاوية'?swap(c):pick(c);markReq(id);render();
+};
+
+// ---------- السائق ----------
+let photo=null,here=null;
+function gps(ok){if(!navigator.geolocation)return toast('الجهاز ما يدعم تحديد الموقع');navigator.geolocation.getCurrentPosition(p=>ok({lat:p.coords.latitude,lng:p.coords.longitude}),()=>toast('ما قدرنا نجيب الموقع'),{enableHighAccuracy:true,timeout:10000})}
+const dNum=()=>+$('#dNum').value.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+$('#dNum').oninput=()=>{const c=find(dNum());$('#dInfo').textContent=!$('#dNum').value?'اكتب الرقم المكتوب على الحاوية':!c?'رقم غير موجود':c.status==='out'?`عند ${c.cust} · ${c.hood} · يوم ${ar(daysOut(c))} من ${ar(c.days)}`:'في الحوش'};
+$('#dPhoto').onchange=e=>{const file=e.target.files[0];if(!file)return;const img=new Image();img.onload=()=>{const k=Math.min(1,400/img.width),cv=document.createElement('canvas');cv.width=img.width*k;cv.height=img.height*k;cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);photo=cv.toDataURL('image/jpeg',.7);$('#dPhotoTxt').innerHTML=`<img src="${photo}" alt=""> تم إرفاق الصورة`;URL.revokeObjectURL(img.src)};img.src=URL.createObjectURL(file)};
+document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{
+  const c=find(dNum());if(!c)return toast('اكتب رقم حاوية صحيح');
+  const act=b.dataset.act,extra=photo?{img:photo}:{};
+  const done=()=>{photo=null;$('#dPhotoTxt').textContent='صوّر الحاوية (اختياري)';$('#dNum').value='';$('#dInfo').textContent='اكتب الرقم المكتوب على الحاوية'};
+  if(act==='drop'){if(c.status==='out')return toast('الحاوية أصلاً عند عميل');gps(p=>{here=p;openDrop(c.n);dropLL=p;$('#dmLoc').textContent='موقعك الحالي ✓';done()});return}
+  if(c.status!=='out')return toast('الحاوية في الحوش');
+  act==='swap'?swap(c,extra):pick(c,extra);done();
+});
+
+// ---------- QR ----------
+function openQR(n){
+  const url=new URL('index.html?c='+n+'#order',location.href).href;
+  $('#qrNo').textContent=ar(n);$('#qrTel').textContent=PHONE;$('#qrBox').innerHTML='';
+  new QRCode($('#qrBox'),{text:url,width:180,height:180,colorDark:'#24420e',colorLight:'#ffffff'});
+  $('#drawer').classList.remove('open');$('#qrModal').classList.add('on');$('#scrim').classList.remove('on');
+}
+
+// ---------- عام ----------
+function showView(v){document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));if(v==='map')setTimeout(()=>map.invalidateSize(),50)}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showView(b.dataset.v));
+let tt;function toast(m){$('#toast span').textContent=m;$('#toast').classList.add('on');clearTimeout(tt);tt=setTimeout(()=>$('#toast').classList.remove('on'),2600)}
+$('#resetBtn').onclick=()=>{fleet=seed();closeAll();toast('رجعت البيانات التجريبية')};
+addEventListener('storage',e=>{if(e.key===RKEY)render()});
+lucide.createIcons();render();
+</script>
+</body>
+</html>
